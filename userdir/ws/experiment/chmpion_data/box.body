@@ -1,0 +1,75 @@
+format: ChoreonoidBody
+format_version: 2.0
+angle_unit: degree
+name: "box"
+root_link: "root"
+links: 
+  - 
+    name: "root"
+    elements: 
+      - 
+        type: Transform
+        elements: 
+          - 
+            type: Transform
+            elements: 
+              - 
+                type: Transform
+                translation: [ 1.5, 3, 1 ]
+                elements: 
+                  - 
+                    type: Shape
+                    appearance: 
+                      material: 
+                        diffuse: [ 0.7, 0, 0 ]
+                        emissive: [ 0.3, 0, 0 ]
+                    geometry: 
+                      type: Box
+                      size: [ 0.1, 1.5, 1 ]
+              - 
+                type: Transform
+                translation: [ 3, 3, 1 ]
+                elements: 
+                  - 
+                    type: Shape
+                    appearance: 
+                      material: 
+                        diffuse: [ 0, 0.7, 0 ]
+                        emissive: [ 0, 0.3, 0 ]
+                    geometry: 
+                      type: Box
+                      size: [ 0.1, 1.5, 1 ]
+              - 
+                type: Transform
+                translation: [ 2.25, 2.25, 1 ]
+                elements: 
+                  - 
+                    type: Shape
+                    appearance: 
+                      material: 
+                        diffuse: [ 0, 0, 0.7 ]
+                        emissive: [ 0, 0, 0.3 ]
+                    geometry: 
+                      type: Box
+                      size: [ 1.5, 0.1, 1 ]
+              - 
+                type: Transform
+                translation: [ 2.25, 3.75, 1 ]
+                elements: 
+                  - 
+                    type: Shape
+                    appearance: 
+                      material: 
+                        diffuse: [ 0.7, 0.7, 0.7 ]
+                        emissive: [ 0.3, 0.3, 0.3 ]
+                    geometry: 
+                      type: Box
+                      size: [ 1.5, 0.1, 1 ]
+    joint_name: root
+    joint_type: free
+    mass: 600
+    center_of_mass: [ 2.25, 3, 0 ]
+    inertia: [ 
+      275.25, 0, 0, 
+      0, 275.25, 0, 
+      0, 0, 434 ]

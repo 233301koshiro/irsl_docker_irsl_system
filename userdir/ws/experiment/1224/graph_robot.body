@@ -1,0 +1,1017 @@
+format: ChoreonoidBody
+format_version: 2.0
+angle_unit: degree
+name: "graph_robot"
+root_link: "Root"
+links: 
+  - 
+    name: "Root"
+    elements: 
+      - 
+        type: Transform
+        elements: 
+          - 
+            type: Transform
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0.7, 0.7, 0.7 ]
+                    emissive: [ 0.3, 0.3, 0.3 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            translation: [ 0, 0, 0.5 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0.7, 0, 0 ]
+                    emissive: [ 0.3, 0, 0 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.5, 1 ]
+          - 
+            type: Transform
+            translation: [ 0, -0.1, 1 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.28 ]
+                    emissive: [ 0, 0, 0.12 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 1.11022302463e-16, 0.5 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0.7, 0 ]
+                    emissive: [ 0, 0.3, 0 ]
+                geometry: 
+                  type: Cylinder
+                  radius: 0.06
+                  height: 1
+    joint_name: Root
+    joint_type: free
+    mass: 127.31
+    center_of_mass: [ 0, -0.00628389, 0.5 ]
+    inertia: [ 
+      15.551, 0, 0, 
+      0, 13.726, 0.4, 
+      0, 0.4, 4.702 ]
+  - 
+    name: "L4_ballx"
+    parent: Root
+    translation: [ 0, 0, 1 ]
+    joint_name: L4_ballx
+    joint_type: revolute
+    joint_axis: [ 1, 0, 0 ]
+    joint_id: 0
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L4_bally"
+    parent: L4_ballx
+    joint_name: L4_bally
+    joint_type: revolute
+    joint_axis: [ 0, 1, 0 ]
+    joint_id: 1
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L4"
+    elements: 
+      - 
+        type: Transform
+        translation: [ -0, -0, -1 ]
+        elements: 
+          - 
+            type: Transform
+            translation: [ 0, 0.1, 1 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.56 ]
+                    emissive: [ 0, 0, 0.24 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            translation: [ 0, -0.1, 2 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.28 ]
+                    emissive: [ 0, 0, 0.12 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 1.11022302463e-16, 1.5 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0.7, 0 ]
+                    emissive: [ 0, 0.3, 0 ]
+                geometry: 
+                  type: Cylinder
+                  radius: 0.06
+                  height: 1
+    parent: L4_bally
+    joint_name: L4
+    joint_type: revolute
+    joint_axis: [ 0, 0, 1 ]
+    joint_id: 2
+    mass: 27.3097
+    center_of_mass: [ 0, 4.59775e-17, 0.5 ]
+    inertia: [ 
+      5.21932, 0, 0, 
+      0, 5.05932, 0.8, 
+      0, 0.8, 0.287024 ]
+  - 
+    name: "L3_ballx"
+    parent: L4
+    translation: [ 0, 0, 1 ]
+    joint_name: L3_ballx
+    joint_type: revolute
+    joint_axis: [ 1, 0, 0 ]
+    joint_id: 3
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L3_bally"
+    parent: L3_ballx
+    joint_name: L3_bally
+    joint_type: revolute
+    joint_axis: [ 0, 1, 0 ]
+    joint_id: 4
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L3"
+    elements: 
+      - 
+        type: Transform
+        translation: [ -0, -0, -2 ]
+        elements: 
+          - 
+            type: Transform
+            translation: [ 0, 0.1, 2 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.56 ]
+                    emissive: [ 0, 0, 0.24 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            translation: [ 0, -0.1, 3 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.28 ]
+                    emissive: [ 0, 0, 0.12 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 1.11022302463e-16, 2.5 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0.7, 0 ]
+                    emissive: [ 0, 0.3, 0 ]
+                geometry: 
+                  type: Cylinder
+                  radius: 0.06
+                  height: 1
+    parent: L3_bally
+    joint_name: L3
+    joint_type: revolute
+    joint_axis: [ 0, 0, 1 ]
+    joint_id: 5
+    mass: 27.3097
+    center_of_mass: [ 0, 4.59775e-17, 0.5 ]
+    inertia: [ 
+      5.21932, 0, 0, 
+      0, 5.05932, 0.8, 
+      0, 0.8, 0.287024 ]
+  - 
+    name: "L2_ballx"
+    parent: L3
+    translation: [ 0, 0, 1 ]
+    joint_name: L2_ballx
+    joint_type: revolute
+    joint_axis: [ 1, 0, 0 ]
+    joint_id: 6
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L2_bally"
+    parent: L2_ballx
+    joint_name: L2_bally
+    joint_type: revolute
+    joint_axis: [ 0, 1, 0 ]
+    joint_id: 7
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L2"
+    elements: 
+      - 
+        type: Transform
+        translation: [ -0, -0, -3 ]
+        elements: 
+          - 
+            type: Transform
+            translation: [ 0, 0.1, 3 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.56 ]
+                    emissive: [ 0, 0, 0.24 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            translation: [ 0, -0.1, 4 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.28 ]
+                    emissive: [ 0, 0, 0.12 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 1.11022302463e-16, 3.5 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0.7, 0 ]
+                    emissive: [ 0, 0.3, 0 ]
+                geometry: 
+                  type: Cylinder
+                  radius: 0.06
+                  height: 1
+    parent: L2_bally
+    joint_name: L2
+    joint_type: revolute
+    joint_axis: [ 0, 0, 1 ]
+    joint_id: 8
+    mass: 27.3097
+    center_of_mass: [ 0, 4.59775e-17, 0.5 ]
+    inertia: [ 
+      5.21932, 0, 0, 
+      0, 5.05932, 0.8, 
+      0, 0.8, 0.287024 ]
+  - 
+    name: "L1_ballx"
+    parent: L2
+    translation: [ 0, 0, 1 ]
+    joint_name: L1_ballx
+    joint_type: revolute
+    joint_axis: [ 1, 0, 0 ]
+    joint_id: 9
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L1_bally"
+    parent: L1_ballx
+    joint_name: L1_bally
+    joint_type: revolute
+    joint_axis: [ 0, 1, 0 ]
+    joint_id: 10
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L1"
+    elements: 
+      - 
+        type: Transform
+        translation: [ -0, -0, -4 ]
+        elements: 
+          - 
+            type: Transform
+            translation: [ 0, 0.1, 4 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.56 ]
+                    emissive: [ 0, 0, 0.24 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            translation: [ 0, -0.1, 5 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.28 ]
+                    emissive: [ 0, 0, 0.12 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 1.11022302463e-16, 4.5 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0.7, 0 ]
+                    emissive: [ 0, 0.3, 0 ]
+                geometry: 
+                  type: Cylinder
+                  radius: 0.06
+                  height: 1
+    parent: L1_bally
+    joint_name: L1
+    joint_type: revolute
+    joint_axis: [ 0, 0, 1 ]
+    joint_id: 11
+    mass: 27.3097
+    center_of_mass: [ 0, 4.59775e-17, 0.5 ]
+    inertia: [ 
+      5.21932, 0, 0, 
+      0, 5.05932, 0.8, 
+      0, 0.8, 0.287024 ]
+  - 
+    name: "L5_ballx"
+    parent: L1
+    translation: [ 0, 0, 1 ]
+    joint_name: L5_ballx
+    joint_type: revolute
+    joint_axis: [ 1, 0, 0 ]
+    joint_id: 12
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L5_bally"
+    parent: L5_ballx
+    joint_name: L5_bally
+    joint_type: revolute
+    joint_axis: [ 0, 1, 0 ]
+    joint_id: 13
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L5"
+    elements: 
+      - 
+        type: Transform
+        translation: [ -0, -0, -5 ]
+        elements: 
+          - 
+            type: Transform
+            translation: [ 0, 0.1, 5 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.56 ]
+                    emissive: [ 0, 0, 0.24 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            translation: [ 0, -0.1, 6 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.28 ]
+                    emissive: [ 0, 0, 0.12 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 1.11022302463e-16, 5.5 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0.7, 0 ]
+                    emissive: [ 0, 0.3, 0 ]
+                geometry: 
+                  type: Cylinder
+                  radius: 0.06
+                  height: 1
+    parent: L5_bally
+    joint_name: L5
+    joint_type: revolute
+    joint_axis: [ 0, 0, 1 ]
+    joint_id: 14
+    mass: 27.3097
+    center_of_mass: [ 0, 4.59775e-17, 0.5 ]
+    inertia: [ 
+      5.21932, 0, 0, 
+      0, 5.05932, 0.8, 
+      0, 0.8, 0.287024 ]
+  - 
+    name: "L6_ballx"
+    parent: L5
+    translation: [ 0, 0, 1 ]
+    joint_name: L6_ballx
+    joint_type: revolute
+    joint_axis: [ 1, 0, 0 ]
+    joint_id: 15
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L6_bally"
+    parent: L6_ballx
+    joint_name: L6_bally
+    joint_type: revolute
+    joint_axis: [ 0, 1, 0 ]
+    joint_id: 16
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L6"
+    elements: 
+      - 
+        type: Transform
+        translation: [ -0, -0, -6 ]
+        elements: 
+          - 
+            type: Transform
+            translation: [ 0, 0.1, 6 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.56 ]
+                    emissive: [ 0, 0, 0.24 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            translation: [ 0, -0.1, 7 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.28 ]
+                    emissive: [ 0, 0, 0.12 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 1.11022302463e-16, 6.5 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0.7, 0 ]
+                    emissive: [ 0, 0.3, 0 ]
+                geometry: 
+                  type: Cylinder
+                  radius: 0.06
+                  height: 1
+    parent: L6_bally
+    joint_name: L6
+    joint_type: revolute
+    joint_axis: [ 0, 0, 1 ]
+    joint_id: 17
+    mass: 27.3097
+    center_of_mass: [ 0, 4.59775e-17, 0.5 ]
+    inertia: [ 
+      5.21932, 0, 0, 
+      0, 5.05932, 0.8, 
+      0, 0.8, 0.287024 ]
+  - 
+    name: "L0_ballx"
+    parent: L6
+    translation: [ 0, 0, 1 ]
+    joint_name: L0_ballx
+    joint_type: revolute
+    joint_axis: [ 1, 0, 0 ]
+    joint_id: 18
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L0_bally"
+    parent: L0_ballx
+    joint_name: L0_bally
+    joint_type: revolute
+    joint_axis: [ 0, 1, 0 ]
+    joint_id: 19
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L0"
+    elements: 
+      - 
+        type: Transform
+        translation: [ -0, -0, -7 ]
+        elements: 
+          - 
+            type: Transform
+            translation: [ 0, 0.1, 7 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.56 ]
+                    emissive: [ 0, 0, 0.24 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            translation: [ 0, -0.1, 8 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.28 ]
+                    emissive: [ 0, 0, 0.12 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            translation: [ 0, -0.1, 8 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.28 ]
+                    emissive: [ 0, 0, 0.12 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 1.11022302463e-16, 7.5 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0.7, 0 ]
+                    emissive: [ 0, 0.3, 0 ]
+                geometry: 
+                  type: Cylinder
+                  radius: 0.06
+                  height: 1
+          - 
+            type: Transform
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 1.11022302463e-16, 7.5 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0.7, 0 ]
+                    emissive: [ 0, 0.3, 0 ]
+                geometry: 
+                  type: Cylinder
+                  radius: 0.06
+                  height: 1
+    parent: L0_bally
+    joint_name: L0
+    joint_type: revolute
+    joint_axis: [ 0, 0, 1 ]
+    joint_id: 20
+    mass: 46.6195
+    center_of_mass: [ 0, -0.0171602, 0.585801 ]
+    inertia: [ 
+      7.94838, 0, 0, 
+      0, 7.72211, 1.13136, 
+      0, 1.13136, 0.426987 ]
+  - 
+    name: "L8_ballx"
+    parent: L0
+    translation: [ 0, 0, 1 ]
+    joint_name: L8_ballx
+    joint_type: revolute
+    joint_axis: [ 1, 0, 0 ]
+    joint_id: 21
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L8_bally"
+    parent: L8_ballx
+    joint_name: L8_bally
+    joint_type: revolute
+    joint_axis: [ 0, 1, 0 ]
+    joint_id: 22
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L8"
+    elements: 
+      - 
+        type: Transform
+        translation: [ -0, -0, -8 ]
+        elements: 
+          - 
+            type: Transform
+            translation: [ 0, 0.1, 8 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.56 ]
+                    emissive: [ 0, 0, 0.24 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            translation: [ 0, -0.1, 8.5 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.28 ]
+                    emissive: [ 0, 0, 0.12 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 5.55111512313e-17, 8.25 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0.7, 0 ]
+                    emissive: [ 0, 0.3, 0 ]
+                geometry: 
+                  type: Cylinder
+                  radius: 0.06
+                  height: 0.5
+    parent: L8_bally
+    joint_name: L8
+    joint_type: revolute
+    joint_axis: [ 0, 0, 1 ]
+    joint_id: 23
+    mass: 21.6549
+    center_of_mass: [ 0, 1.4496e-17, 0.25 ]
+    inertia: [ 
+      1.38957, 0, 0, 
+      0, 1.22957, 0.4, 
+      0, 0.4, 0.276845 ]
+  - 
+    name: "L7_ballx"
+    parent: L8
+    translation: [ 0, 0, 0.5 ]
+    joint_name: L7_ballx
+    joint_type: revolute
+    joint_axis: [ 1, 0, 0 ]
+    joint_id: 24
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L7_bally"
+    parent: L7_ballx
+    joint_name: L7_bally
+    joint_type: revolute
+    joint_axis: [ 0, 1, 0 ]
+    joint_id: 25
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L7"
+    elements: 
+      - 
+        type: Transform
+        translation: [ -0, -0, -8.5 ]
+        elements: 
+          - 
+            type: Transform
+            translation: [ 0, 0.1, 8.5 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.56 ]
+                    emissive: [ 0, 0, 0.24 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            translation: [ 0, 0, 9 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0.7, 0, 0 ]
+                    emissive: [ 0.3, 0, 0 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.5, 1 ]
+    parent: L7_bally
+    joint_name: L7
+    joint_type: revolute
+    joint_axis: [ 0, 0, 1 ]
+    joint_id: 26
+    mass: 108
+    center_of_mass: [ 0, 0.00740741, 0.462963 ]
+    inertia: [ 
+      12.3959, 0, 0, 
+      0, 10.5719, 0.37037, 
+      0, 0.37037, 4.62741 ]
+  - 
+    name: "L10_ballx"
+    parent: L0
+    translation: [ 0, 0, 1 ]
+    joint_name: L10_ballx
+    joint_type: revolute
+    joint_axis: [ 1, 0, 0 ]
+    joint_id: 27
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L10_bally"
+    parent: L10_ballx
+    joint_name: L10_bally
+    joint_type: revolute
+    joint_axis: [ 0, 1, 0 ]
+    joint_id: 28
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L10"
+    elements: 
+      - 
+        type: Transform
+        translation: [ -0, -0, -8 ]
+        elements: 
+          - 
+            type: Transform
+            translation: [ 0, 0.1, 8 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.56 ]
+                    emissive: [ 0, 0, 0.24 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            translation: [ 0, -0.1, 8.5 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.28 ]
+                    emissive: [ 0, 0, 0.12 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            rotation: [ 1, 0, 0, 90 ]
+            translation: [ 0, 5.55111512313e-17, 8.25 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0.7, 0 ]
+                    emissive: [ 0, 0.3, 0 ]
+                geometry: 
+                  type: Cylinder
+                  radius: 0.06
+                  height: 0.5
+    parent: L10_bally
+    joint_name: L10
+    joint_type: revolute
+    joint_axis: [ 0, 0, 1 ]
+    joint_id: 29
+    mass: 21.6549
+    center_of_mass: [ 0, 1.4496e-17, 0.25 ]
+    inertia: [ 
+      1.38957, 0, 0, 
+      0, 1.22957, 0.4, 
+      0, 0.4, 0.276845 ]
+  - 
+    name: "L9_ballx"
+    parent: L10
+    translation: [ 0, 0, 0.5 ]
+    joint_name: L9_ballx
+    joint_type: revolute
+    joint_axis: [ 1, 0, 0 ]
+    joint_id: 30
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L9_bally"
+    parent: L9_ballx
+    joint_name: L9_bally
+    joint_type: revolute
+    joint_axis: [ 0, 1, 0 ]
+    joint_id: 31
+    mass: 0
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      0, 0, 0, 
+      0, 0, 0, 
+      0, 0, 0 ]
+  - 
+    name: "L9"
+    elements: 
+      - 
+        type: Transform
+        translation: [ -0, -0, -8.5 ]
+        elements: 
+          - 
+            type: Transform
+            translation: [ 0, 0.1, 8.5 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0, 0, 0.56 ]
+                    emissive: [ 0, 0, 0.24 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.2, 0.2 ]
+          - 
+            type: Transform
+            translation: [ 0, 0, 9 ]
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0.7, 0, 0 ]
+                    emissive: [ 0.3, 0, 0 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.2, 0.5, 1 ]
+    parent: L9_bally
+    joint_name: L9
+    joint_type: revolute
+    joint_axis: [ 0, 0, 1 ]
+    joint_id: 32
+    mass: 108
+    center_of_mass: [ 0, 0.00740741, 0.462963 ]
+    inertia: [ 
+      12.3959, 0, 0, 
+      0, 10.5719, 0.37037, 
+      0, 0.37037, 4.62741 ]

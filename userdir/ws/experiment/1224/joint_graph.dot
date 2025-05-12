@@ -1,0 +1,21 @@
+strict graph "" {
+	0	["node"=L0,
+		pos="(235, 118)",
+		type=joint];
+	1	["node"=L1,
+		pos="(268, 130)",
+		type=joint];
+	0 -- 1	[weight=35.11409973215888];
+	2	["node"=L2,
+		pos="(300, 201)",
+		type=joint];
+	1 -- 2	[weight=77.87810988975015];
+	3	["node"=L3,
+		pos="(348, 326)",
+		type=joint];
+	2 -- 3	[weight=133.8992158304148];
+	4	["node"=L4,
+		pos="(357, 406)",
+		type=joint];
+	3 -- 4	[weight=80.50465825031493];
+}

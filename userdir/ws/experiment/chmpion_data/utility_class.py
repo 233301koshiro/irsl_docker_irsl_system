@@ -1,0 +1,744 @@
+#! /usr/bin/env python3
+import time
+import torch
+import numpy as np
+import cv2
+import argparse
+import networkx as nx
+from scipy.spatial import distance
+import matplotlib.pyplot as plt
+import os
+# 配列の表示を省略せずに全て表示する
+np.set_printoptions(threshold=np.inf)
+
+
+
+#自分で作った、画像に関する関数が入ったクラス
+#似たような関数をクラス化してメソッドにしたものユーティリティクラスという
+#ユーティリティクラスは__initやselfがそこまでいらない
+class Mycv:
+    @staticmethod
+    def draw_local_max_image(heatmap_tf):#入力画像の上に推定グラフを描画
+        # 画像の大きさを適切に設定
+        height, width = 512, 512
+        image = np.zeros((height, width, 3), dtype=np.uint8)
+
+        # オブジェクトポイントを青で描画
+        for point in heatmap_tf:
+            #print(f"Point: {point}, Shape: {np.shape(point)}")
+            cv2.circle(image, tuple(point), 4, (255, 255, 255), -1)  # 白 (BGR)
+
+        return image
+    
+    def draw_true_image(image,true_joint_points,true_end_points):#正解がある場合、正解の描画
+        #jointを青で描画
+        joint_points = true_joint_points[:, ::-1]
+        end_points = true_end_points[:, ::-1]
+        for point in joint_points:
+            cv2.circle(image, tuple(point), 2, (255, 0, 0), -1)  # (BGR)
+
+        # オブジェクトポイントを青で描画
+        for point in end_points:
+            cv2.circle(image, tuple(point), 2, (0, 0, 255), -1)  # (BGR)
+
+        return image
+    def make_color_heatmap(gray_img):
+        jet_img = cv2.applyColorMap(gray_img, cv2.COLORMAP_JET)
+        return jet_img
+    
+    def get_localmax(pred_sig, kernelsize, th=0.4):#局所最大値を求める関数。ヒートマップの中から特に明るい点をジョイントとするための関数
+        padding_size = (kernelsize-1)//2
+        pred_sig = pred_sig.unsqueeze(0).unsqueeze(0)  # (1, 1, 高さ, 幅)
+        max_v = torch.nn.functional.max_pool2d(pred_sig, kernelsize, stride=1, padding=padding_size)
+        pred_sig[pred_sig!=max_v] = 0
+        pred_sig[pred_sig<th] = 0
+        pred_sig[pred_sig!=0] = 1
+        return pred_sig
+    
+    def binarize_to_fill_image(image,flag):#塗りつぶし関数
+        if(flag==0):#いつもの用
+            # 画像をグレースケールに変換
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            # 輪郭を検出
+            contours, _ = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            # 同じサイズの空の画像を作成
+            filled_image = np.zeros_like(image)
+            
+            # 輪郭内を塗りつぶす
+            for contour in contours:
+                # 輪郭の内部を塗りつぶす
+                cv2.drawContours(filled_image, [contour], -1, (255,255,255), thickness=cv2.FILLED)
+            return filled_image
+        else:#ほかデータ用
+            # グレースケールに変換
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            # 白黒を反転
+            inverted = cv2.bitwise_not(gray)
+
+            # 二値化（閾値127を基準に黒か白にする）
+            _, binary = cv2.threshold(inverted, 127, 255, cv2.THRESH_BINARY)
+            # 輪郭を検出
+            contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            # 同じサイズの空の画像を作成
+            filled_image = np.zeros_like(image)
+            # 輪郭内を塗りつぶす
+            for contour in contours:
+                # 輪郭の内部を塗りつぶす
+                cv2.drawContours(filled_image, [contour], -1, (255,255,255), thickness=cv2.FILLED)
+
+            contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            # 輪郭を描画するために全て黒の画像を作成
+            input_image = np.zeros_like(binary)
+            
+            # 検出した輪郭を塗りつぶし
+            cv2.drawContours(input_image, contours, -1, (255),2)
+            return filled_image,input_image
+    
+    def ensure_same_dimensions(image1, image2):#画像サイズを揃えてくれる関数
+        # Resize image2 to match the dimensions of image1 if necessary
+        if image1.shape[:2] != image2.shape[:2]:
+            image2 = cv2.resize(image2, (image1.shape[1], image1.shape[0]))
+        return image2
+    
+    def draw_debug_image(G, object_points):#入力画像の上に推定グラフを描画
+        # 画像の大きさを適切に設定
+        height, width = 512, 512
+        image = np.zeros((height, width, 3), dtype=np.uint8)
+
+        # オブジェクトポイントを青で描画
+        for point in object_points:
+            cv2.circle(image, tuple(point), 2, (255, 255, 255), -1)  # 白 (BGR)
+
+        #ジョイントリンクを描画
+        for start_node, end_node in G.edges:
+            start_pos = G.nodes[start_node]['pos']  
+            end_pos = G.nodes[end_node]['pos']      
+            if start_pos is not None and end_pos is not None:
+                start = tuple(start_pos)  
+                end = tuple(end_pos)     
+                cv2.line(image, start, end, (0, 255, 0), 3)  # 緑の線を描画
+
+        #エンドエフェクタリンクを描画
+        for start_node, end_node in G.edges:
+            #forでとりだしたものはただの座標のタプル
+            #グラフはノードの属性の値をそのままキーとしてアクセスできる
+            #わけではなく今回はノードの名前が座標からつけられているから
+            s_node=G.nodes[start_node]
+            e_node=G.nodes[end_node]
+            if(s_node['type']=="endeffector" or e_node['type']=="endeffector" ):
+                start_pos = G.nodes[start_node]['pos']  # 始点ノードの座標
+                end_pos = G.nodes[end_node]['pos']      # 終点ノードの座標
+                if start_pos is not None and end_pos is not None:
+                    start = tuple(start_pos)  # 始点
+                    end = tuple(end_pos)      # 終点
+                    cv2.line(image, start, end, (255, 0, 255), 1)  # 紫の線を描画
+
+        # 各ノードを訪問し、'endeffector' なら赤、'joint' なら青で描画
+        for node, attr in G.nodes(data=True):
+            pos = attr.get('pos')
+            node_type = attr.get('type')
+
+            if pos is not None:
+                color = (0, 0, 255) if node_type == 'endeffector' else (255, 0, 0)
+                cv2.circle(image, pos, 3, color, -1)  # エンドエフェクタなら赤、ジョイントなら青
+                if pos==(265,133) or pos==(270,317):
+                    cv2.circle(image, pos, 3, (0,0,0), -1)  # エンドエフェクタなら赤、ジョイントなら青
+        
+        
+        return image
+    
+    def draw_true_image(image,true_joint_points,true_end_points):#正解がある場合、正解の描画
+        #jointを青で描画
+        joint_points = true_joint_points[:, ::-1]
+        end_points = true_end_points[:, ::-1]
+        for point in joint_points:
+            cv2.circle(image, tuple(point), 2, (255, 0, 0), -1)  # (BGR)
+
+        # オブジェクトポイントを青で描画
+        for point in end_points:
+            cv2.circle(image, tuple(point), 2, (0, 0, 255), -1)  # (BGR)
+
+        return image
+
+
+#座標関係のクラス  
+class Coordinate:
+    @staticmethod
+
+    
+    def create_set(array):#座標の一致を調べるために座標のsetをつくる
+        # 1の座標をセットに格納
+        object_set = set()
+        length=len(array)
+        for i in range(length):
+            object_set.add(array[i][0]+512*array[i][1])
+
+        return object_set
+    
+    
+    def get_line_indices2(x1, y1, x2, y2):#リンクの候補座標を返す
+        # ベクトル (x2 - x1, y2 - y1) を求める
+        dx = x2 - x1
+        dy = y2 - y1
+        
+        # ベクトルの長さを求める
+        length = np.sqrt(dx**2 + dy**2)
+        
+        # ベクトルの正規化 (ベクトルの長さを1にする)
+        dx_norm = dx / length
+        dy_norm = dy / length
+        
+        # 始点から距離1進んだ新しい点を計算
+        x_new = x1 + dx_norm
+        y_new = y1 + dy_norm
+        
+        return (x_new, y_new)
+
+    
+    def generate_points(start,end):#2点を結んだ線上にある座標のリストを返す+各ジョイントの上下左右3マスも入れる
+        x1, y1 = start
+        x2, y2 = end
+    
+        points = []  
+        points.append(list(start))# 始点を最初の点として追加
+        current_point = start
+        
+        # 終点まで進む処理
+        while True:
+            # 現在の点と終点の距離を計算
+            dx = x2 - current_point[0]
+            dy = y2 - current_point[1]
+            distance_to_end = np.sqrt(dx**2 + dy**2)
+            
+            # 距離が1未満になったら終了
+            if distance_to_end < 1:
+                break
+            
+            # 次の点を取得
+            next_point = Coordinate.get_line_indices2(current_point[0], current_point[1], x2, y2)
+            points.append(list(next_point))
+            
+            # 次の点を現在の点とする
+            current_point = next_point
+        
+        # 最後に終点を追加
+        points.append(list(end))
+        #座標は要素なので整数に
+        for i in range(len(points)):
+            points[i][0]=int(points[i][0])
+            points[i][1]=int(points[i][1])
+
+        return points
+        
+    
+    def check_background_in_line(link_set,object_set,link_points_num,sikiiti=0.8):# 補助関数: 線分上に背景があるか確認
+        count=len(link_set.intersection(object_set))
+        #print(count/link_points_num)
+        # object_points の座標が 80%以上存在すれば False を返す
+        if count >= sikiiti * link_points_num:
+            return True
+
+        
+        return False
+
+
+#グラフ関係のクラス
+class Graph:
+    @staticmethod
+       
+    def save_graph_image(G,output_path,pos_flag): #グラフ保存関数
+        # Create a dictionary of positions from node attributes
+        pos = nx.get_node_attributes(G, 'pos')
+        if 'Root' not in pos:  # 'Root'ノードが位置情報を持っていない場合
+            pos['Root'] = (0, 0)  # 任意の位置（例: (0, 0)）を設定
+            pos['G_Root'] = (10, 10)  # 任意の位置（例: (0, 0)）を設定
+        plt.figure(figsize=(8, 8))
+        nx.draw(G, pos, node_size=100, node_color='blue', with_labels=False)
+
+        # Add edge labels for the weights
+        labels = nx.get_edge_attributes(G, 'weight')
+        nx.draw_networkx_edge_labels(G, pos, edge_labels={k: f'{v:.2f}' for k, v in labels.items()})
+
+        # ノードの座標をラベルとして表示
+        node_labels = {node: f'{pos[node]}' for node in G.nodes()}
+        if(pos_flag):
+            nx.draw_networkx_labels(G, pos, labels=node_labels, font_size=8)
+        else:
+            pos = nx.spring_layout(G)
+            nx.draw_networkx_labels(G, pos, labels=node_labels, font_size=8)
+        # Save the graph image
+        plt.savefig(output_path, format='png')
+        plt.close()
+
+    
+    def remove_longest_edge_in_cycle_undirected(G,tf):#グラフ内のループを検出し、ループ内の最大の長さを削除
+        try:
+            cycle = nx.find_cycle(G)
+        except nx.NetworkXNoCycle:
+            return G,False
+        # サイクルを成すノードを出力
+        cycle_nodes = set()
+        for u, v in cycle:
+            cycle_nodes.add(u)
+            cycle_nodes.add(v)
+
+        print(f"サイクルを成すノード: {list(cycle_nodes)}")
+        max_edge = None
+        max_length = float('-inf')
+
+        # サイクル内の各エッジの長さを確認
+        for u, v in cycle:
+            length = G[u][v].get('weight', 1)
+
+            if length > max_length:
+                max_length = length
+                max_edge = (u, v)
+
+        # 最も長いエッジを削除
+        if max_edge:
+            G.remove_edge(*max_edge)
+            print(f"削除されたエッジ: {max_edge}, 長さ: {max_length}")
+
+        return G,tf
+   
+
+    def docking_graph(JG, EG,object_set,joint_set):#グラフの結合
+        
+
+        
+       
+        #今のグラフの回数
+        for i, node in enumerate(EG.nodes()):
+            EG.nodes[node]["type"] = "endeffector"
+            EG.nodes[node]["node"] = f"G{i}"
+
+        # JGのノードに"type"属性を"joint"、"node"属性をf"L{i}"として追加
+        for i, node in enumerate(JG.nodes()):
+            JG.nodes[node]["type"] = "joint"
+            JG.nodes[node]["node"] = f"L{i}"
+        # ノード名をリラベル
+        EG = nx.relabel_nodes(EG, lambda x: f"EG_{x}")
+        # ノード名をリラベル
+        JG = nx.relabel_nodes(JG, lambda x: f"JG_{x}")
+        GG = nx.compose(EG, JG)#これ第一引数のノード名はそのままで、第２引数のグラフのノード名が適当になってる
+        print("ただ結合しただけ",GG)
+        # 結果の確認
+        #print("ノード一覧:", GG.nodes(data=True))
+        
+
+        #どっちかのノードがいっこもなかったら何もしない
+        if(EG.number_of_nodes()==0 or JG.number_of_nodes()==0):
+            print("グラフ作れません")
+            exit()
+
+        #追加する工程--------------------------------------------------------------------------------------------------------
+        #シン・連結部分 
+        j_nodes_list = list(JG.nodes(data=True))
+        e_nodes_list = list(EG.nodes(data=True))
+        for e_node, e_attrs in e_nodes_list:
+            for j_node, j_attrs in j_nodes_list:
+                start = np.array(j_attrs['pos'])
+                end = np.array(e_attrs['pos'])
+
+
+                dist = distance.euclidean(start, end)                
+
+                #始点と終点から距離1の座標を取り続けてsetにまでする
+                link_points=Coordinate.generate_points(start,end)
+                link_set=Coordinate.create_set(link_points)
+                # リンクの候補地に他のジョイントがあるかどうかを確認
+                if len(link_set.intersection(joint_set)) > 2:  # 開始・終了点を除いたジョイントが存在するかをチェック
+                    print("エンドエフェクタとジョイントつなごうとしたけどブロッカーいるのでスキップ")
+                    continue  # 他のジョイントがある場合はリンクを無視し、次のループに移行
+
+                #線上に8割objectpointがあればTrue
+                #オブジェクトの塗りつぶしとリンク候補地の塗りつぶしを論理積で比較、その結果が候補地の何割を満たすか
+                if  Coordinate.check_background_in_line(link_set,object_set,len(link_points),sikiiti=0.8):
+                    GG.add_edge(e_node, j_node, weight=dist)          
+                    #print("いけやした")
+                else:
+                    pass
+                    #print("だめでした")
+        print("EGとJGを0.8ルールで結んだ後,\n",GG.edges)
+        print("↑ループがあるぞ！")
+        tf=True
+        while(tf):
+            GG,tf=Graph.remove_longest_edge_in_cycle_undirected(GG,tf)
+        #print("b地点:",GG)
+        #1つのジョイントから２つのエンドエフェクタが出ているときは
+        # 各エンドエフェクタにそれぞれジョイントを生やす
+        # エッジを削除して新しいノードを追加する処理
+        print("粛清後,\n",GG.edges)
+        multi_node=[]
+        for node, attrs in list(GG.nodes(data=True)):
+            if attrs.get("type") == "joint":
+                connected_nodes = list(GG.neighbors(node))
+                count = sum(1 for n in connected_nodes if GG.nodes[n].get("type") == "endeffector")
+                
+                if count < 2:
+                    break
+                else:                    
+                    print("このノードは複数のエンドエフェクタにつながってたから中間にノード増やすよ",node)
+                    for neighbor in connected_nodes:
+                        if(GG.nodes[neighbor]['type']=='joint'):
+                            print("お前はjointだからスキップ",neighbor)
+                            continue
+
+                        multi_node.append(node)
+                                    
+                        GG.remove_edge(node, neighbor)
+
+                        node_pos = attrs['pos']
+                        neighbor_pos = GG.nodes[neighbor]['pos']
+                        mid_pos1 = (int((node_pos[0] + neighbor_pos[0]) / 2), int((node_pos[1] + neighbor_pos[1]) / 2))
+                        new_node_id1 = 'JG_'+str(mid_pos1)
+
+                        mid_pos2 = (int((node_pos[0] + mid_pos1[0]) / 2), int((node_pos[1] + mid_pos1[1]) / 2))
+                        new_node_id2 = 'JG_'+str(mid_pos2)
+                        GG.add_node(new_node_id1, type="joint", pos=mid_pos1)
+                        GG.add_node(new_node_id2, type="joint", pos=mid_pos2)
+                        GG.add_edge(new_node_id1, neighbor)#neighbor newnode_id1 newnode_id2 node
+                        GG.add_edge(new_node_id1, new_node_id2)
+                        GG.add_edge(node, new_node_id2)
+
+        print("複数エンドエフェクタノード増やし後\n",GG.edges)
+        #print("c地点:",GG)
+        tf=True
+        while(tf):
+            GG,tf=Graph.remove_longest_edge_in_cycle_undirected(GG,tf)
+        print("粛清後\n",GG.edges)
+        #削除する工程---------------------------------------------------------------------------------------------------------------
+        #endeffectorが追加されてない末端のジョイントは削除
+        nodes_list = list(GG.nodes(data=True))
+        for node, attrs in nodes_list:
+            if attrs['type']=='joint' and len(list(GG.neighbors(node)))==1:#ジョイントかつ末端
+                #隣のノードの次数が3以上なら削除
+                
+                neighbor = list(GG.neighbors(node))[0]  # 隣接ノードを取得
+                a = GG.degree(neighbor)  # ノードの次数を取得
+                #print(a)
+
+                if(a>=3):
+                    GG.remove_node(node)  
+                    print("エンドエフェクタがない末端のジョイントなので削除します",attrs['pos'])   
+
+        print("エンドエフェクタがない末端のジョイント削除後\n",GG.edges)
+        #endeffectorなのに2つ以上のジョイントとつながってるものは削除
+        for node, attrs in nodes_list:
+            if attrs['type']=='endeffector' and GG.degree(node)>=2:
+                   print("endeffectorなのに2つ以上のジョイントとつながってるので削除",node,GG.degree(node))
+                   #GG.remove_node(node)      
+        
+
+        
+        #nodes_to_remove = [node for node, degree in dict(GG.degree()).items() if degree == 0]
+        #GG.remove_nodes_from(nodes_to_remove)
+        #print("削除ノード\n",nodes_to_remove)
+        tf=True
+        while(tf):
+            GG,tf=Graph.remove_longest_edge_in_cycle_undirected(GG,tf)
+
+        
+        print("色々あったあと",GG)
+
+
+        return GG,multi_node
+    
+    def teacher_graph(GG,multi_node):
+        NG = nx.Graph()
+            # jointとendeffectorのカウンタ
+        joint_count = 0
+        endeffector_count = 0
+        # GGの各ノードを訪問
+
+        for node, attrs in GG.nodes(data=True):
+            # 新しいparams辞書を作成
+            params = {
+                'node': attrs.get('node', 'Unnamed'),  # ノード名、デフォルトは 'Unnamed'
+                'type': attrs.get('type', 'unknown'),  # ノードの種類、デフォルトは 'unknown'
+                'original_node': node,  # 元のノードIDを追加
+                'translation':[0,0,0],
+                'relative': True
+                
+            }
+            # 'joint'や'geometry'情報を追加（typeに応じて設定）
+            if attrs.get('type') == 'joint':
+                connected_nodes = list(GG.neighbors(node))
+                count = sum(1 for n in connected_nodes if GG.nodes[n].get("type") == "endeffector")
+                if(count):#endeffectorにつながるjointだったら短いリンクにする
+                    params['translation']=[0,0,0.5]
+                else:
+                    params['translation']=[0,0,1.0]
+            
+            params['node'] = f"L{joint_count}"
+            params['type'] ='link'
+            params['joint'] = {'type': 'ball'}
+            shape = 'cylinder'
+            joint_count=joint_count+1
+                
+            if attrs.get('type') == 'endeffector':
+                params['node'] = f"G{endeffector_count}"
+                params['type'] ='geom'
+                params['geometry'] = {'primitive': 'box', 'args': {'x': 0.2,'y' : 0.5, 'z': 1.0,'color': [1, 0, 0]}}
+                params['translation']=  [0,0,0.5]#z/2にする
+                shape = 'box'
+                endeffector_count=endeffector_count+1
+
+            # NGにノードを追加
+            NG.add_node(node, params=params, shape=shape)
+
+            # GGのエッジを参照してNGにエッジを追加
+            for edge in GG.edges(data=True):
+                node1, node2, edge_attrs = edge
+                if node1 in NG and node2 in NG:  # NGに両端のノードが存在する場合
+                    NG.add_edge(node1, node2, **edge_attrs)  # エッジ属性も引き継ぐ
+
+        NG.add_node("G_Root", shape="box",
+            params={'node': "G_Root", 'type': 'geom', 
+                    'geometry': {'primitive': 'box', 
+                                    'args': {'x': 0.2,'y' : 0.2, 'z': 0.2,'color': [1, 1, 1]}},
+                    'original_node': node
+                    }
+                    )
+        NG.add_node("Root",shape="diamond",
+            params={'node': "Root", 'type': 'link', 'joint': {'type': 'root'}})
+        NG.add_edge("Root", "G_Root")
+        #G_Rootと各エンドエフェクタから最も遠いノードを繋ぐ
+        # エンドエフェクタノードを探す
+        #G0に対してすべてのLの距離を計算してリストで返す[G0-L0の距離,G0-L1の距離、...]
+        #G1に対してすべてのLの距離を計算してリストで返す[G1-L0の距離,G1-L1の距離、...]
+        #各リストの同じ要素を足して最も大きい値を持つLとG_Rootをつなぐ
+        # ノード名を変更するためのマッピングを作成
+        
+        for node, data in NG.nodes(data=True):
+            if(multi_node==None):
+                break
+            if(node in multi_node):
+                print("複数のエンドエフェクタの元ジョイントは",NG.nodes[node]['params']['node'])
+            
+
+       # Gノードを特定
+        G_nodes = [n for n, d in NG.nodes(data=True) if d['params']['type'] == 'geom']
+
+        # 全ノード数を取得して sum_distance を初期化
+        all_nodes = list(NG.nodes())
+        sum_distance = [0] * len(all_nodes)  # すべて 0 で初期化
+
+        # 各Gノードについて最も遠いノードを見つける
+        for G in G_nodes:
+            # 全ノードへの距離を計算
+            distances = nx.single_source_shortest_path_length(NG, G)
+
+            # ノードIDをインデックスにマッピング
+            distances_list = [distances.get(node, 0) for node in all_nodes]
+
+            # 各要素を足す
+            sum_distance = [x + y for x, y in zip(sum_distance, distances_list)]
+
+        # 距離が最大のノードを特定
+        farthest_index = sum_distance.index(max(sum_distance))
+        farthest_node = all_nodes[farthest_index]
+
+        # G_Rootと接続
+        NG.add_edge("G_Root", farthest_node)
+        print(f"各Gノードから最も遠いノード {farthest_node} を G_Root と接続しました。")
+        mapping = {}
+        for node, data in NG.nodes(data=True):
+            # params['node'] が存在する場合に新しい名前を設定
+            if 'params' in data and 'node' in data['params']:
+                mapping[node] = data['params']['node']
+        
+        # ノード名をリネーム
+        NG = nx.relabel_nodes(NG, mapping)
+        
+
+        
+        return NG
+    
+    def draw_graph_with_hierarchy(graph,filepath):#先生のグラフを描画する
+        # 描画のためのノードの位置を設定
+        pos = nx.spring_layout(graph)
+        
+        # ノードを描画
+        for node, attrs in graph.nodes(data=True):
+            params = attrs.get('params', {})
+            shape = attrs.get('shape', 'circle')
+            
+            # 色と形状を params や type に応じて設定
+            color = params.get('geometry', {}).get('args', {}).get('color', [0, 0, 0])  # デフォルトは黒
+            color = tuple(color)  # matplotlib 用にタプルに変換
+            
+            # ノードの形を設定
+            if shape == 'box':
+                node_shape = 's'  # 四角
+            elif shape == 'diamond':
+                node_shape = 'D'  # ダイヤモンド
+            elif shape == 'cylinder':
+                node_shape = 'o'  # 円
+            else:
+                node_shape = 'o'  # デフォルト円
+            
+            # ノードの描画
+            nx.draw_networkx_nodes(graph, pos,
+                                nodelist=[node],
+                                node_color=[color],
+                                node_shape=node_shape,
+                                node_size=500)
+        
+        # エッジを描画
+        nx.draw_networkx_edges(graph, pos, width=1.0, alpha=0.5)
+        
+        # ノードラベルを設定（params の 'node' 属性を表示）
+        labels = {node: attrs['params'].get('node', node) for node, attrs in graph.nodes(data=True)}
+        nx.draw_networkx_labels(graph, pos, labels, font_size=10,font_color='blue')
+        
+        # 保存または表示
+        if filepath:
+            plt.savefig(filepath)  # 画像を保存
+            print(f"Graph saved to {filepath}")
+        else:
+            plt.show()  # 画面に表示
+
+        # 描画をクリア（保存後に影響が出ないように）
+        plt.clf()
+
+    def create_rooted_directed_tree(G, root_param):#有向グラフ(木)にする
+        """
+        G: 無向グラフ (NetworkX グラフ)
+        root_param: ルートノードのパラメータ（ルートとなるノード）
+        """
+        # 有向グラフを作成
+        DG = nx.DiGraph()
+
+        # ルートノードを追加
+        if root_param in G:
+            root_attrs = G.nodes[root_param]
+            DG.add_node(root_param, **root_attrs)  # 属性を保持してノードを追加
+
+            # ルートノードから他のノードに到達可能な有向エッジを追加
+            # DFSまたはBFSでノードを巡回
+            visited = set()  # 訪問済みノード
+            def dfs(node):
+                visited.add(node)
+                for neighbor in G.neighbors(node):
+                    if neighbor not in visited:
+                        # 無向グラフから有向エッジを追加
+                        DG.add_edge(node, neighbor)
+                        # ノードの属性も保持
+                        DG.add_node(neighbor, **G.nodes[neighbor])
+                        dfs(neighbor)
+
+            # ルートノードからDFSを開始
+            dfs(root_param)
+        
+        else:
+            raise ValueError(f"指定されたルートノード {root_param} はグラフに存在しません。")
+
+        return DG
+
+
+    def new_create_graph_from_points(heat_array, object_array,flag):#ヒートマップからグラフを作成する
+        #ジョイントやオブジェクトのある座標のリストを作成
+        #array=実際の値,points=その実際の値がある座標
+        object_points = np.array(np.where(object_array != 0)).T[:, ::-1]  # Coordinates of non-zero pointsj
+        heat_points = np.array(np.where(heat_array != 0)).T[:, ::-1]  # Coordinates of non-zero points
+        object_set=Coordinate.create_set(object_points)#objectがある座標をsetに
+        
+        G = nx.Graph()
+        delete_indices = []
+        if(flag=='endeffector'):
+            print("endffector_points:",heat_points)
+            #エンドエフェクタは輪郭のギリギリの場所にあるから、これだとわんちゃんうまくいかないことがありそう
+            #エッジとかいらないけど座標とoutlineの中にあるかだけ見たほうがいい
+            '''
+            for i in range(len(heat_points)):
+                #エンドエフェクタの座標セット
+                endeffector_set= {heat_points[i][0] + heat_points[i][1] * 512}
+                if endeffector_set.intersection(object_set):#エンドエフェクタがロボット領域にあるなら
+                    pass
+                else:
+                    delete_indices.append(i)#消去するインデックスのリスト
+                    print("一個消したよ")
+            endeffector_points = np.delete(heat_points, delete_indices, axis=0)
+            '''
+            endeffector_localmax_haetmap=Mycv.draw_local_max_image(heat_points)
+            cv2.imwrite("testdata/endeffector_localmax_heatmap.png", endeffector_localmax_haetmap) 
+            endeffector_points=heat_points
+            for (x,y) in endeffector_points:
+                G.add_node((x, y), pos=(x, y), type='endeffector')
+
+            return G
+
+
+        elif(flag=='joint'):
+            print("joint_points:",heat_points)
+            #ロボット領域の外にあるジョイントを削除
+            #ジョイント同士にすべて線を引いたとしたときの
+            #その時の各リンクの各座標を覚える
+            #リンク候補地にジョイントがあれば除く
+            #リンクの座標が8割ロボット領域上にあればエッジを追加
+            #孤立ノードの削除
+            #グラフ内でループになっている箇所の削除
+            #リンクをいくつか消しているので、all_link_pointの再計算
+            #論文に乗せるヒートマップから局所最大値をとったもの
+            joint_localmax_haetmap=Mycv.draw_local_max_image(heat_points)
+            cv2.imwrite("testdata/joint_localmax_heatmap.png", joint_localmax_haetmap)
+            joint_points=heat_points
+            # 削除するインデックスを収集
+            for i in range(len(joint_points)):
+                a = {joint_points[i][0] + joint_points[i][1] * 512}
+                if a.intersection(object_set):
+                    #print("ok")
+                    pass
+                else:
+                    #print("delete")
+                    delete_indices.append(i)
+            print("ロボット領域にないjointを削除します",delete_indices)
+
+            #ロボット領域にないジョイントを一括削除
+            joint_points = np.delete(joint_points, delete_indices, axis=0)        
+            joint_set=Coordinate.create_set(joint_points)
+            # enumerate()はインデックス番号と座標値を同時に取り出すもの
+            for idx, coord in enumerate(joint_points):
+                G.add_node(idx, pos=tuple(coord), type='joint')
+
+            # 2重ループだけど探索範囲が三角
+            for i in range(len(joint_points)):
+                for j in range(i + 1, len(joint_points)):
+                    start = np.array(joint_points[i])
+                    end = np.array(joint_points[j])
+
+                    dist = distance.euclidean(start, end)
+                    if(dist<30):
+                        print("近すぎるから消すわ",dist)
+                        continue
+                    else:
+
+                        print(dist)
+                    #始点と終点から距離1の座標を取り続けてsetにまでする
+                    link_points=Coordinate.generate_points(start,end)
+                    link_set=Coordinate.create_set(link_points)
+                    
+                    # リンクの候補地に他のジョイントがあるかどうかを確認
+                    if len(link_set.intersection(joint_set)) > 2:  # 開始・終了点を除いたジョイントが存在するかをチェック
+                        continue  # 他のジョイントがある場合はリンクを無視し、次のループに移行
+
+                    #線上に8割objectpointがあればTrue
+                    #オブジェクトの塗りつぶしとリンク候補地の塗りつぶしを論理積で比較、その結果が候補地の何割を満たすか
+                    if  Coordinate.check_background_in_line(link_set,object_set,len(link_points),):
+                        G.add_edge(i, j, weight=dist)                    
+
+
+            '''
+            nodes_to_remove = [node for node, degree in dict(G.degree()).items() if degree == 0]
+            G.remove_nodes_from(nodes_to_remove)
+            '''
+  
+            tf=True
+            while(tf):
+                G,tf=Graph.remove_longest_edge_in_cycle_undirected(G,tf)
+
+
+            return G,object_points,joint_set,object_set
+
+    

@@ -1,0 +1,33 @@
+format: ChoreonoidBody
+format_version: 2.0
+angle_unit: degree
+name: "red_box"
+root_link: "Root"
+links: 
+  - 
+    name: "Root"
+    elements: 
+      - 
+        type: Transform
+        translation: [-2.0, 2.0, 0.5]  # 初期位置
+        elements: 
+          - 
+            type: Transform
+            elements: 
+              - 
+                type: Shape
+                appearance: 
+                  material: 
+                    diffuse: [ 0.7, 0, 0 ]
+                    emissive: [ 0.3, 0, 0 ]
+                geometry: 
+                  type: Box
+                  size: [ 0.5, 0.5, 0.5 ]
+    joint_name: Root
+    joint_type: fixed
+    mass: 125
+    center_of_mass: [ 0, 0, 0 ]
+    inertia: [ 
+      5.20833, 0, 0, 
+      0, 5.20833, 0, 
+      0, 0, 5.20833 ]
